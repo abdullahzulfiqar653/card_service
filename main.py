@@ -1,16 +1,19 @@
 import os
 import secrets
+import logging
 import requests
+
 from pydantic import BaseModel
 from dotenv import load_dotenv
-from jinja2 import Environment, FileSystemLoader
+from fastapi.responses import JSONResponse
 from playwright.sync_api import sync_playwright
-from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
+from jinja2 import Environment, FileSystemLoader
+from fastapi import FastAPI, Request, BackgroundTasks
 
 # Load .env
 load_dotenv()
-
 app = FastAPI()
+logger = logging.getLogger("uvicorn.error")
 
 # Setup template env
 env = Environment(loader=FileSystemLoader("templates"))
@@ -41,7 +44,11 @@ async def ip_restrict_middleware(request: Request, call_next):
     client_ip = request.client.host
     if allowed_ips:  # if list not empty, enforce restriction
         if client_ip not in allowed_ips:
-            raise HTTPException(status_code=403, detail="Access denied")
+            logger.warning(f"Access denied for IP: {client_ip}")
+            return JSONResponse(
+                status_code=403,
+                content={"detail": "Access denied"},
+            )
     response = await call_next(request)
     return response
 
