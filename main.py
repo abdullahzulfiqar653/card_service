@@ -43,13 +43,14 @@ class CardData(BaseModel):
 async def ip_restrict_middleware(request: Request, call_next):
     client_ip = request.client.host
     if allowed_ips:  # if list not empty, enforce restriction
-        logger.warning(f"Access denied for IP: {client_ip}")
+        logger.warning(f"Allowed Ips: {allowed_ips}")
         if client_ip not in allowed_ips:
             logger.warning(f"Access denied for IP: {client_ip}")
             return JSONResponse(
                 status_code=403,
                 content={"detail": f"Access denied for your IP: {client_ip}"},
             )
+        logger.warning(f"Ip check passed for Ip: {client_ip}")
     response = await call_next(request)
     return response
 
