@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from jinja2 import Environment, FileSystemLoader
 from playwright.sync_api import sync_playwright
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, BackgroundTasks
 
 # Load .env
 load_dotenv()
@@ -25,6 +25,7 @@ class CardData(BaseModel):
     chat_id: str
     time_str: str
     apiToken: str
+    is_1bill: bool
     instance_id: str
     merchant_name: str
     merchant_phone: str
@@ -87,37 +88,43 @@ def send_whatsapp_image(image_path, chat_id, instance_id, apiToken):
 
 
 # ----------------------------
-# Main Endpoint
+# Background Task
 # ----------------------------
-@app.post("/generate-payment-card")
-def generate_card(data: CardData):
+def process_card(data: CardData, filepath: str):
+    # Render HTML template
     template = env.get_template("payment_paid_card_template.html")
     html_content = template.render(
         amount=data.amount,
         time_str=data.time_str,
+        is_1bill=data.is_1bill,
         merchant_name=data.merchant_name,
         merchant_phone=data.merchant_phone,
         transaction_id=data.transaction_id,
         product_owner_phone=data.product_owner_phone,
     )
 
-    # Generate unique filename
-    os.makedirs("generated", exist_ok=True)
-    filename = f"payment_paid_card_{secrets.token_hex(4)}.png"
-    filepath = os.path.join("generated", filename)
-
     # Render HTML → PNG
     html_to_image(html_content, filepath)
 
     # Send via WhatsApp
-    response = send_whatsapp_image(
-        filepath, data.chat_id, data.instance_id, data.apiToken
-    )
-    if os.path.exists(filepath):
-        os.remove(filepath)
+    try:
+        send_whatsapp_image(filepath, data.chat_id, data.instance_id, data.apiToken)
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
-    return {
-        "status": "success",
-        "file_path": filepath,
-        "whatsapp_response": response,
-    }
+
+# ----------------------------
+# Main Endpoint
+# ----------------------------
+@app.post("/generate-payment-card")
+def generate_card(data: CardData, background_tasks: BackgroundTasks):
+    os.makedirs("generated", exist_ok=True)
+    filename = f"payment_paid_card_{secrets.token_hex(4)}.png"
+    filepath = os.path.join("generated", filename)
+
+    # Queue background task
+    background_tasks.add_task(process_card, data, filepath)
+
+    # Return immediate response
+    return {"status": "queued", "file_path": filepath}
