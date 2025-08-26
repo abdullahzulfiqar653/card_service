@@ -82,7 +82,7 @@ def html_to_image(html_content: str, output: str):
 # WhatsApp Sender
 # ----------------------------
 def send_whatsapp_image(image_path, chat_id, instance_id, apiToken):
-    url = f"https://7105.media.greenapi.com/waInstance{instance_id}/sendFileByUpload/{apiToken}"
+    url = f"https://7700.media.greenapi.com/waInstance{instance_id}/sendFileByUpload/{apiToken}"
     payload = {
         "chatId": f"92{chat_id}@c.us",
         "caption": "",
@@ -92,7 +92,14 @@ def send_whatsapp_image(image_path, chat_id, instance_id, apiToken):
         response = requests.post(url, data=payload, files=files)
 
     print("✅ WhatsApp API response:", response.text)
-    return response.json()
+    try:
+        return response.json()
+    except ValueError:  # not JSON
+        return {
+            "error": "Non-JSON response",
+            "status": response.status_code,
+            "text": response.text,
+        }
 
 
 # ----------------------------
