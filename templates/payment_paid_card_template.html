@@ -184,6 +184,12 @@
         color: var(--muted);
         line-height: 1.6;
       }
+      .txn-id {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: -6px;
+        margin-bottom: 14px;
+      }
     </style>
   </head>
 
@@ -210,6 +216,7 @@
         <span class="pill">Paid</span>
 
         <div class="amount">Rs. {{ amount }}</div>
+        <div class="txn-id">Txn ID: {{ transaction_id }}</div>
 
         <div class="merchant">
           <div class="logo">{{ merchant_name }}</div>
