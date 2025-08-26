@@ -36,6 +36,16 @@ class CardData(BaseModel):
     product_owner_phone: str
 
 
+class PendingInvoiceData(BaseModel):
+    footer: str
+    chat_id: str
+    apiToken: str
+    instance_id: str
+    merchant_name: str
+    transaction_data: dict
+    product_owner_phone: str
+
+
 # ----------------------------
 # Middleware: Restrict by IP
 # ----------------------------
@@ -130,6 +140,24 @@ def process_card(data: CardData, filepath: str):
             os.remove(filepath)
 
 
+def process_pending_invoice(data: PendingInvoiceData, filepath: str):
+    template = env.get_template("quick_invoice_template.html")
+    html_content = template.render(
+        footer=data.footer,
+        merchant_name=data.merchant_name,
+        transaction=data.transaction_data,
+        product_owner_phone=data.product_owner_phone,
+    )
+
+    html_to_image(html_content, filepath)
+
+    try:
+        send_whatsapp_image(filepath, data.chat_id, data.instance_id, data.apiToken)
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+
+
 # ----------------------------
 # Main Endpoint
 # ----------------------------
@@ -143,4 +171,18 @@ def generate_card(data: CardData, background_tasks: BackgroundTasks):
     background_tasks.add_task(process_card, data, filepath)
 
     # Return immediate response
+    return {"status": "queued", "file_path": filepath}
+
+
+@app.post("/generate-pending-invoice")
+def generate_pending_invoice(
+    data: PendingInvoiceData, background_tasks: BackgroundTasks
+):
+    os.makedirs("generated", exist_ok=True)
+    filename = f"pending_invoice_{secrets.token_hex(4)}.png"
+    filepath = os.path.join("generated", filename)
+
+    # Queue background task
+    background_tasks.add_task(process_pending_invoice, data, filepath)
+
     return {"status": "queued", "file_path": filepath}

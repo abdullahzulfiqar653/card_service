@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Invoice</title>
+    <style>
+      body {
+        font-family: "Helvetica Neue", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        background: #f9fafb;
+        color: #111;
+      }
+
+      .card {
+        width: 380px; /* narrow, like a receipt */
+        margin: 20px auto;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        padding: 20px 15px;
+      }
+
+      .invoice-header {
+        text-align: center;
+        border-bottom: 1px dashed #aaa;
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      .merchant-name {
+        font-size: 15px;
+        font-weight: bold;
+        margin-top: 5px;
+      }
+
+      .status-badge {
+        margin-top: 6px;
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        display: inline-block;
+      }
+
+      .status-pending {
+        color: #666;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+      }
+
+      .status-1bill {
+        color: #065f46;
+        background: #ecfdf5;
+        border: 1px solid #34d399;
+      }
+
+      .header-info {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        margin-bottom: 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 15px;
+        font-size: 12px;
+      }
+
+      table th,
+      table td {
+        padding: 6px 4px;
+        border-bottom: 1px solid #eee;
+      }
+
+      table th {
+        background: #f3f4f6;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      table tr:last-child td {
+        border-bottom: none;
+      }
+
+      /* column alignments */
+      .col-month {
+        text-align: left;
+      }
+      .col-amount {
+        text-align: right;
+      }
+
+      .invoice-summary {
+        border-top: 1px dashed #aaa;
+        padding-top: 10px;
+        font-size: 13px;
+        margin-top: 10px;
+      }
+
+      .invoice-summary div {
+        display: flex;
+        justify-content: space-between;
+        margin: 4px 0;
+      }
+
+      .invoice-summary strong {
+        font-weight: bold;
+      }
+
+      .invoice-footer {
+        border-top: 1px dashed #aaa;
+        padding-top: 10px;
+        text-align: center;
+        font-size: 11px;
+        color: #555;
+        margin-top: 10px;
+      }
+
+      .invoice-footer .secondary {
+        color: #888;
+      }
+
+      .divider {
+        margin: 6px auto;
+        height: 1px;
+        width: 60%;
+        background: #ddd;
+      }
+
+      .brand {
+        font-size: 10px;
+        color: #666;
+        margin-top: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <!-- Header -->
+      <div class="invoice-header">
+        <div class="merchant-name">{{ merchant_name }}</div>
+        {% if transaction.is_online %}
+        <div class="status-badge status-1bill">1Link Confirmation</div>
+        {% else %}
+        <div class="status-badge status-pending">Pending Confirmation</div>
+        {% endif %}
+      </div>
+
+      <!-- Info Rows -->
+      <div class="header-info">
+        <span><strong>Txn id #:</strong> {{ transaction.id }}</span>
+        
+        <span
+          ><strong>Customer:</strong> {{
+          transaction.merchant_membership.member.user.first_name }}</span
+        >
+      </div>
+      <div class="header-info">
+        <span
+          ><strong>1Bill ID:</strong> {{ transaction.merchant_membership.account
+          }}</span
+        >
+        <span
+          ><strong>Cashier:</strong> {{ transaction.metadata.cashier or
+          transaction.metadata.created_by }}</span
+        >
+      </div>
+      <div class="header-info">
+        <span><strong>Time:</strong> <span id="datetime"></span></span>
+        <span
+        ><strong>Payment method:</strong> {{ transaction.payment_method }}</span
+      >
+      </div>
+      
+
+      <!-- Items Table -->
+      <table>
+        <thead>
+          <tr>
+            <th class="col-month">Month</th>
+            <th class="col-amount">Amount</th>
+            <th class="col-amount">Due</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in transaction.invoices %}
+          <tr>
+            <td class="col-month">
+              {{ inv.metadata.name_of_invoice or inv.code }}
+            </td>
+            <td class="col-amount">{{ inv.total_amount }}</td>
+            <td class="col-amount">{{ inv.due_amount }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <!-- Summary -->
+      <div class="invoice-summary">
+        <div>
+          <span>Total Paid:</span> <strong>{{ transaction.value }}</strong>
+        </div>
+        <div>
+          <span>Balance/Due:</span> <strong>{{ transaction.balance }}</strong>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="invoice-footer">
+        Thank you for your payment.
+        <span class="secondary">Confirmation will follow shortly.</span><br />
+        <div style="white-space: pre-line">{{ footer }}</div>
+        <div class="divider"></div>
+        <div class="brand">Powered by <strong>Wasooli.online</strong></div>
+      </div>
+    </div>
+  </body>
+</html>
+
+<script>
+  // get raw datetime from template context
+  const rawDate = "{{ transaction.created_at }}"; // e.g. 2025-09-08T18:45:30.559626
+  if (rawDate) {
+    const date = new Date(rawDate);
+    const options = {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    };
+    document.getElementById("datetime").textContent = date.toLocaleString(
+      "en-US",
+      options
+    );
+  }
+</script>
