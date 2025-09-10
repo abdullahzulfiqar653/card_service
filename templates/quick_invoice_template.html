@@ -151,7 +151,6 @@
       <!-- Info Rows -->
       <div class="header-info">
         <span><strong>Txn id #:</strong> {{ transaction.id }}</span>
-        
         <span
           ><strong>Customer:</strong> {{
           transaction.merchant_membership.member.user.first_name }}</span
@@ -170,11 +169,8 @@
       <div class="header-info">
         <span><strong>Time:</strong> <span id="datetime"></span></span>
         <span
-        ><strong>Payment method:</strong> {{ transaction.payment_method }}</span
-      >
+          ><strong>Payment method:</strong> {{ transaction.payment_method }}</span>
       </div>
-      
-
       <!-- Items Table -->
       <table>
         <thead>
@@ -187,9 +183,7 @@
         <tbody>
           {% for inv in transaction.invoices %}
           <tr>
-            <td class="col-month">
-              {{ inv.metadata.name_of_invoice or inv.code }}
-            </td>
+            <td class="col-month">{{ inv.name or inv.code }}</td>
             <td class="col-amount">{{ inv.total_amount }}</td>
             <td class="col-amount">{{ inv.due_amount }}</td>
           </tr>
