@@ -32,7 +32,7 @@ class CardData(BaseModel):
     instance_id: str
     merchant_name: str
     merchant_phone: str
-    transaction_id: str
+    transaction_data: dict
     product_owner_phone: str
 
 
@@ -125,7 +125,7 @@ def process_card(data: CardData, filepath: str):
         is_1bill=data.is_1bill,
         merchant_name=data.merchant_name,
         merchant_phone=data.merchant_phone,
-        transaction_id=data.transaction_id,
+        transaction=data.transaction_data,
         product_owner_phone=data.product_owner_phone,
     )
 

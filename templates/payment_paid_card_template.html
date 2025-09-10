@@ -218,7 +218,9 @@
         <span class="pill">Paid</span>
 
         <div class="amount">Rs. {{ amount }}</div>
-        <div class="txn-id">Txn ID: {{ transaction_id }}</div>
+        <div class="txn-id">Txn ID: {{ transaction.id }}</div>
+        <div class="txn-id">{{ transaction.merchant_membership.member.user.first_name }}</div>
+
 
         <div class="merchant">
           <div class="logo">{{ merchant_name }}</div>
@@ -230,7 +232,7 @@
 
         <div class="meta">
           {{ time_str }} <br />
-          Need a software solution? Call: +92-{{ product_owner_phone }}
+          Powered by <strong>wasooli.online</strong>
         </div>
       </div>
     </div>
