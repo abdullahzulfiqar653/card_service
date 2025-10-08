@@ -33,6 +33,7 @@ class CardData(BaseModel):
     merchant_name: str
     merchant_phone: str
     transaction_data: dict
+    show_amount: bool = True
     product_owner_phone: str
 
 
@@ -123,6 +124,7 @@ def process_card(data: CardData, filepath: str):
         amount=data.amount,
         time_str=data.time_str,
         is_1bill=data.is_1bill,
+        show_amount=data.show_amount,
         merchant_name=data.merchant_name,
         merchant_phone=data.merchant_phone,
         transaction=data.transaction_data,
